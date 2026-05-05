@@ -1,0 +1,89 @@
+body {
+  margin: 0;
+  background: #0b1220;
+  color: #eee;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#ui {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  font-size: 14px;
+}
+
+button {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #2b2b2b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+}
+
+#board {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+}
+
+/* hex 格子 */
+.hex {
+  position: absolute;
+  width: 26px;
+  height: 30px;
+  clip-path: polygon(
+    50% 0%,
+    93% 25%,
+    93% 75%,
+    50% 100%,
+    7% 75%,
+    7% 25%
+  );
+  user-select: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+/* 更亮的棋盘颜色 */
+.hex.light {
+  background: #2c3e50;
+}
+
+.hex.dark {
+  background: #34495e;
+}
+
+/* 障碍更明显 */
+.hex.obstacle {
+  background: #e74c3c !important;
+}
+
+/* 猫 */
+#cat {
+  position: absolute;
+  width: 26px;
+  height: 30px;
+  background: #f1c40f;
+  clip-path: polygon(
+    50% 0%,
+    93% 25%,
+    93% 75%,
+    50% 100%,
+    7% 75%,
+    7% 25%
+  );
+  transition: transform 0.25s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@media (max-width: 600px) {
+  .hex, #cat {
+    width: 18px;
+    height: 22px;
+  }
+}
