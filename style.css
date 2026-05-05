@@ -30,7 +30,7 @@ button {
   transform: translate(-50%, -50%);
 }
 
-/* hex */
+/* 六边形 */
 .hex {
   position: absolute;
   width: 28px;
@@ -47,42 +47,34 @@ button {
   transition: background 0.15s;
 }
 
-/* 🔥 对比度增强（明显交错） */
+/* 🎯 更高对比度棋盘 */
 .hex.light {
-  background: #415a77;
+  background: #4b6b8a;
 }
 
 .hex.dark {
-  background: #1b263b;
+  background: #22324a;
 }
 
-/* 🟢 起点特殊颜色 */
+/* 🟢 起点 */
 .hex.start {
   background: #2ecc71 !important;
 }
 
-/* 障碍 */
+/* 🚫 障碍 */
 .hex.obstacle {
   background: #e74c3c !important;
 }
 
-/* 猫 */
+/* 🐱 猫 */
 #cat {
   position: absolute;
   width: 28px;
-  height: 32px;
-  background: #f1c40f;
-  clip-path: polygon(
-    50% 0%,
-    93% 25%,
-    93% 75%,
-    50% 100%,
-    7% 75%,
-    7% 25%
-  );
+  height: 28px;
   transition: transform 0.25s ease;
   pointer-events: none;
   z-index: 5;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
 }
 
 @media (max-width: 600px) {
