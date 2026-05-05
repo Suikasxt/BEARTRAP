@@ -1,12 +1,13 @@
-const N = 10; // 🔥 棋盘缩小
+const N = 10;
+
 const board = document.getElementById("board");
 const statusEl = document.getElementById("status");
 
 let obstacles = new Set();
-
 let cat = { q: 0, r: 0 };
-
 let cells = new Map();
+
+const history = []; // 🔥 悔棋栈
 
 const catEl = document.createElement("div");
 catEl.id = "cat";
@@ -47,7 +48,7 @@ function updateCat(){
   catEl.style.transform = `translate(${p.x}px, ${p.y}px)`;
 }
 
-/* 🔥 BFS + 多最短路随机选择 */
+/* 🔥 BFS（保留最短路逻辑） */
 function bfsAllNextSteps(start){
   let queue = [start];
   let distMap = new Map();
@@ -83,7 +84,6 @@ function bfsAllNextSteps(start){
 
       distMap.set(k, curDist + 1);
 
-      // 记录第一步方向
       if(cur.q === start.q && cur.r === start.r){
         firstStepMap.set(k, {q:nq,r:nr});
       } else {
@@ -96,17 +96,23 @@ function bfsAllNextSteps(start){
 
   if(candidates.length === 0) return null;
 
-  // 🔥 从所有最短边界点随机选一个
   let target = candidates[Math.floor(Math.random() * candidates.length)];
-
-  // 回溯第一步
-  let k = key(target.q,target.r);
-  let step = firstStepMap.get(k);
-
-  return step;
+  return firstStepMap.get(key(target.q,target.r));
 }
 
-/* 猫移动（随机最短路） */
+/* =========================
+   🔥 记录状态（用于悔棋）
+========================= */
+function saveState(){
+  history.push({
+    cat: { ...cat },
+    obstacles: new Set([...obstacles])
+  });
+}
+
+/* =========================
+   玩家操作
+========================= */
 function moveCat(){
   let next = bfsAllNextSteps(cat);
 
@@ -119,7 +125,50 @@ function moveCat(){
   updateCat();
 }
 
-/* 初始化棋盘 */
+/* 点击格子 */
+function toggle(q,r){
+  let k = key(q,r);
+
+  saveState(); // 🔥 每一步都存
+
+  if(obstacles.has(k)){
+    obstacles.delete(k);
+    cells.get(k).classList.remove("obstacle");
+  } else {
+    obstacles.add(k);
+    cells.get(k).classList.add("obstacle");
+  }
+
+  moveCat();
+}
+
+/* =========================
+   悔棋
+========================= */
+function undo(){
+  if(history.length === 0) return;
+
+  const last = history.pop();
+
+  cat = last.cat;
+  obstacles = new Set(last.obstacles);
+
+  // 重新渲染障碍
+  cells.forEach((el,k)=>{
+    if(obstacles.has(k)){
+      el.classList.add("obstacle");
+    } else {
+      el.classList.remove("obstacle");
+    }
+  });
+
+  updateCat();
+  statusEl.innerText = "";
+}
+
+/* =========================
+   初始化棋盘
+========================= */
 function init(){
   for(let q=-N;q<=N;q++){
     for(let r=-N;r<=N;r++){
@@ -131,10 +180,9 @@ function init(){
 
       let k = key(q,r);
 
-      // 🔥 更强对比
       let d = dist({q,r},{q:0,r:0});
       if(d === 0){
-        el.classList.add("start"); // 起点
+        el.classList.add("start");
       } else {
         el.classList.add(d % 2 === 0 ? "light" : "dark");
       }
@@ -142,19 +190,7 @@ function init(){
       let p = toPixel(q,r);
       el.style.transform = `translate(${p.x}px, ${p.y}px)`;
 
-      el.onclick = () => {
-        if(cat.q===q && cat.r===r) return;
-
-        if(obstacles.has(k)){
-          obstacles.delete(k);
-          el.classList.remove("obstacle");
-        } else {
-          obstacles.add(k);
-          el.classList.add("obstacle");
-        }
-
-        moveCat();
-      };
+      el.onclick = () => toggle(q,r);
 
       board.appendChild(el);
       cells.set(k, el);
@@ -167,6 +203,7 @@ function init(){
 /* 重开 */
 function resetGame(){
   obstacles.clear();
+  history.length = 0;
   cat = {q:0,r:0};
   statusEl.innerText = "";
 
