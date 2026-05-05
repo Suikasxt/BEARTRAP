@@ -25,6 +25,7 @@ catEl.innerHTML = `
 `;
 board.appendChild(catEl);
 
+/* 六方向 */
 const dirs = [
   [1,0], [1,-1], [0,-1],
   [-1,0], [-1,1], [0,1]
@@ -46,7 +47,13 @@ function isEdge(q,r){
   return dist({q,r},{q:0,r:0}) === N;
 }
 
-const spacing = 26;
+/* =========================
+   📏 自适应 spacing（修复移动端裁切）
+========================= */
+const spacing = Math.max(
+  19,
+  Math.min(26, (window.innerWidth - 80) / 22)
+);
 
 function toPixel(q,r){
   return {
@@ -61,7 +68,7 @@ function updateCat(){
 }
 
 /* =========================
-   BFS（不变）
+   BFS：随机最短路（稳定版）
 ========================= */
 function bfsNext(start){
   let queue = [start];
@@ -70,17 +77,18 @@ function bfsNext(start){
 
   distMap.set(key(start.q,start.r), 0);
 
-  let best = Infinity;
+  let bestDist = Infinity;
   let targets = [];
 
   while(queue.length){
     let cur = queue.shift();
-    let d = distMap.get(key(cur.q,cur.r));
+    let curKey = key(cur.q,cur.r);
+    let d = distMap.get(curKey);
 
-    if(d > best) continue;
+    if(d > bestDist) continue;
 
     if(isEdge(cur.q,cur.r)){
-      best = d;
+      bestDist = d;
       targets.push(cur);
       continue;
     }
@@ -103,7 +111,7 @@ function bfsNext(start){
 
   if(targets.length === 0) return null;
 
-  let target = targets[Math.floor(Math.random()*targets.length)];
+  let target = targets[Math.floor(Math.random() * targets.length)];
 
   let cur = target;
   let step = null;
@@ -135,7 +143,9 @@ function checkFail(){
   return false;
 }
 
-/* 猫移动 */
+/* =========================
+   猫移动
+========================= */
 function moveCat(){
   if(gameOver) return;
 
@@ -150,11 +160,21 @@ function moveCat(){
   cat = next;
   updateCat();
 
-  checkFail(); // 🔥 新增：到边界失败
+  checkFail();
 }
 
 /* =========================
-   点击格子（🔥 修改点）
+   保存状态（悔棋）
+========================= */
+function save(){
+  history.push({
+    cat: {...cat},
+    obstacles: new Set([...obstacles])
+  });
+}
+
+/* =========================
+   点击格子（已修复）
 ========================= */
 function toggle(q,r){
   if(gameOver) return;
@@ -164,7 +184,7 @@ function toggle(q,r){
 
   let k = key(q,r);
 
-  // ❌ 禁止点已有障碍
+  // ❌ 已有障碍不能再点
   if(obstacles.has(k)) return;
 
   save();
@@ -175,15 +195,9 @@ function toggle(q,r){
   moveCat();
 }
 
-/* 保存 */
-function save(){
-  history.push({
-    cat: {...cat},
-    obstacles: new Set([...obstacles])
-  });
-}
-
-/* 悔棋 */
+/* =========================
+   悔棋
+========================= */
 function undo(){
   if(history.length === 0) return;
 
@@ -197,11 +211,14 @@ function undo(){
   });
 
   updateCat();
+
   gameOver = false;
   statusEl.innerText = "";
 }
 
-/* 初始化 */
+/* =========================
+   初始化棋盘
+========================= */
 function init(){
   for(let q=-N;q<=N;q++){
     for(let r=-N;r<=N;r++){
@@ -229,7 +246,9 @@ function init(){
   updateCat();
 }
 
-/* 重开 */
+/* =========================
+   重开
+========================= */
 function resetGame(){
   obstacles.clear();
   history = [];
@@ -238,7 +257,15 @@ function resetGame(){
   statusEl.innerText = "";
 
   cells.forEach(el => el.classList.remove("obstacle"));
+
   updateCat();
 }
 
 init();
+
+/* =========================
+   移动端 resize 修复（轻量）
+========================= */
+window.addEventListener("resize", () => {
+  location.reload();
+});

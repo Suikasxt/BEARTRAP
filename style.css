@@ -3,51 +3,48 @@ body {
   background: #0b1220;
   color: #eee;
   font-family: sans-serif;
-  overflow: hidden;
+
+  /* ✅ 关键修复：避免裁切 */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* ======================
-   顶部 UI（重点放大）
-====================== */
+/* 顶部 */
 #top-ui {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
 
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: rgba(10,15,25,0.9);
   z-index: 20;
 }
 
-/* 说明文字 */
 .desc {
-  font-size: 15px;   /* 🔥 放大 */
+  font-size: 15px;
   line-height: 1.4;
-  margin-bottom: 6px;
 }
 
-/* 状态文字（胜负） */
 #status {
-  font-size: 18px;   /* 🔥 放大明显 */
+  font-size: 18px;
   font-weight: bold;
   color: #ffd166;
-  min-height: 24px;
+  margin-top: 4px;
 }
 
-/* ======================
-   棋盘
-====================== */
+/* 棋盘容器 */
 #board {
   position: absolute;
   left: 50%;
   top: 55%;
   transform: translate(-50%, -50%);
+
+  /* ✅ 关键修复：留安全边距 */
+  padding: 60px;
 }
 
-/* ======================
-   六边形
-====================== */
+/* 六边形 */
 .hex {
   position: absolute;
   width: 28px;
@@ -68,9 +65,7 @@ body {
 .hex.start { background: #2ecc71 !important; }
 .hex.obstacle { background: #e74c3c !important; }
 
-/* ======================
-   猫
-====================== */
+/* 猫 */
 #cat {
   position: absolute;
   width: 28px;
@@ -81,9 +76,7 @@ body {
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
 }
 
-/* ======================
-   底部按钮
-====================== */
+/* 底部按钮 */
 #bottom-ui {
   position: fixed;
   bottom: 0;
@@ -92,7 +85,6 @@ body {
 
   display: flex;
   gap: 10px;
-
   padding: 12px;
   background: rgba(10,15,25,0.95);
   z-index: 30;
@@ -102,29 +94,25 @@ body {
   flex: 1;
   padding: 14px 0;
   font-size: 16px;
-
+  border-radius: 10px;
   background: #2b2b2b;
   color: #fff;
   border: none;
-  border-radius: 10px;
-
   min-height: 46px;
 }
 
-/* ======================
-   移动端优化
-====================== */
+/* 移动端 */
 @media (max-width: 600px) {
+  .hex, #cat {
+    width: 18px;
+    height: 22px;
+  }
+
   .desc {
     font-size: 14px;
   }
 
   #status {
     font-size: 16px;
-  }
-
-  .hex, #cat {
-    width: 18px;
-    height: 22px;
   }
 }
