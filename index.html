@@ -7,14 +7,23 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div id="ui">
-    <div>点击格子放障碍，围住猫。猫只会走当前的最短路到边界，如果有多条最短路它会随机选择。</div>
-    <button onclick="resetGame()">重开</button>
-    <button onclick="undo()">悔棋</button>
-    <span id="status"></span>
+
+  <!-- 顶部 UI（含状态） -->
+  <div id="top-ui">
+    <div class="desc">
+      点击格子放障碍，围住猫。猫会走最短路（多条最短路会随机走）。
+    </div>
+    <div id="status"></div>
   </div>
 
+  <!-- 棋盘 -->
   <div id="board"></div>
+
+  <!-- 底部按钮 -->
+  <div id="bottom-ui">
+    <button onclick="resetGame()">重开</button>
+    <button onclick="undo()">悔棋</button>
+  </div>
 
   <script src="game.js"></script>
 </body>
