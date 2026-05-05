@@ -1,38 +1,31 @@
-const N = 20;
+const N = 10; // 🔥 棋盘缩小
 const board = document.getElementById("board");
 const statusEl = document.getElementById("status");
 
 let obstacles = new Set();
 
-// 猫位置
 let cat = { q: 0, r: 0 };
 
-// 存 hex DOM
 let cells = new Map();
 
-// 猫 DOM（关键：只创建一次）
 const catEl = document.createElement("div");
 catEl.id = "cat";
 board.appendChild(catEl);
 
-// 六方向
 const dirs = [
   [1,0], [1,-1], [0,-1],
   [-1,0], [-1,1], [0,1]
 ];
 
-function key(q, r) {
-  return `${q},${r}`;
-}
+function key(q,r){ return `${q},${r}`; }
 
-// hex 距离
-function dist(a, b) {
+function dist(a,b){
   return (Math.abs(a.q - b.q)
     + Math.abs(a.q + a.r - b.q - b.r)
     + Math.abs(a.r - b.r)) / 2;
 }
 
-function inBoard(q, r) {
+function inBoard(q,r){
   return dist({q,r},{q:0,r:0}) <= N;
 }
 
@@ -40,25 +33,43 @@ function isEdge(q,r){
   return dist({q,r},{q:0,r:0}) === N;
 }
 
-// BFS 最短路
-function bfs(start) {
-  let q = [start];
-  let prev = new Map();
-  prev.set(key(start.q,start.r), null);
+const spacing = 26;
 
-  while(q.length){
-    let cur = q.shift();
+function toPixel(q,r){
+  return {
+    x: (q + r/2) * spacing,
+    y: r * spacing * 0.9
+  };
+}
+
+function updateCat(){
+  const p = toPixel(cat.q, cat.r);
+  catEl.style.transform = `translate(${p.x}px, ${p.y}px)`;
+}
+
+/* 🔥 BFS + 多最短路随机选择 */
+function bfsAllNextSteps(start){
+  let queue = [start];
+  let distMap = new Map();
+  let firstStepMap = new Map();
+
+  distMap.set(key(start.q,start.r), 0);
+  firstStepMap.set(key(start.q,start.r), null);
+
+  let bestEdgeDist = Infinity;
+  let candidates = [];
+
+  while(queue.length){
+    let cur = queue.shift();
+    let curKey = key(cur.q,cur.r);
+    let curDist = distMap.get(curKey);
+
+    if(curDist > bestEdgeDist) continue;
 
     if(isEdge(cur.q,cur.r)){
-      let path = [];
-      let k = key(cur.q,cur.r);
-
-      while(k){
-        let [a,b] = k.split(",").map(Number);
-        path.push({q:a,r:b});
-        k = prev.get(k);
-      }
-      return path.reverse();
+      bestEdgeDist = curDist;
+      candidates.push(cur);
+      continue;
     }
 
     for(let [dq,dr] of dirs){
@@ -68,51 +79,48 @@ function bfs(start) {
 
       if(!inBoard(nq,nr)) continue;
       if(obstacles.has(k)) continue;
-      if(prev.has(k)) continue;
+      if(distMap.has(k)) continue;
 
-      prev.set(k, key(cur.q,cur.r));
-      q.push({q:nq,r:nr});
+      distMap.set(k, curDist + 1);
+
+      // 记录第一步方向
+      if(cur.q === start.q && cur.r === start.r){
+        firstStepMap.set(k, {q:nq,r:nr});
+      } else {
+        firstStepMap.set(k, firstStepMap.get(curKey));
+      }
+
+      queue.push({q:nq,r:nr});
     }
   }
 
-  return null;
+  if(candidates.length === 0) return null;
+
+  // 🔥 从所有最短边界点随机选一个
+  let target = candidates[Math.floor(Math.random() * candidates.length)];
+
+  // 回溯第一步
+  let k = key(target.q,target.r);
+  let step = firstStepMap.get(k);
+
+  return step;
 }
 
-// 位置转像素
-const spacing = 24;
-
-function toPixel(q,r){
-  return {
-    x: (q + r/2) * spacing,
-    y: r * spacing * 0.9
-  };
-}
-
-// 更新猫动画位置
-function updateCat(){
-  const p = toPixel(cat.q, cat.r);
-  catEl.style.transform = `translate(${p.x}px, ${p.y}px)`;
-}
-
-// 猫移动
+/* 猫移动（随机最短路） */
 function moveCat(){
-  let path = bfs(cat);
+  let next = bfsAllNextSteps(cat);
 
-  if(!path){
+  if(!next){
     statusEl.innerText = "猫被困住了！你赢了 🎉";
     return;
   }
 
-  if(path.length > 1){
-    cat = path[1];
-    updateCat();
-  }
+  cat = next;
+  updateCat();
 }
 
-// 创建棋盘（只做一次）
-function initBoard(){
-  let size = 14;
-
+/* 初始化棋盘 */
+function init(){
   for(let q=-N;q<=N;q++){
     for(let r=-N;r<=N;r++){
       let s = -q-r;
@@ -123,8 +131,13 @@ function initBoard(){
 
       let k = key(q,r);
 
-      // 颜色交错
-      el.classList.add((dist({q,r},{q:0,r:0}) % 2 === 0) ? "light" : "dark");
+      // 🔥 更强对比
+      let d = dist({q,r},{q:0,r:0});
+      if(d === 0){
+        el.classList.add("start"); // 起点
+      } else {
+        el.classList.add(d % 2 === 0 ? "light" : "dark");
+      }
 
       let p = toPixel(q,r);
       el.style.transform = `translate(${p.x}px, ${p.y}px)`;
@@ -132,7 +145,7 @@ function initBoard(){
       el.onclick = () => {
         if(cat.q===q && cat.r===r) return;
 
-        if(obstacles.has(k)) {
+        if(obstacles.has(k)){
           obstacles.delete(k);
           el.classList.remove("obstacle");
         } else {
@@ -151,7 +164,7 @@ function initBoard(){
   updateCat();
 }
 
-// 重开
+/* 重开 */
 function resetGame(){
   obstacles.clear();
   cat = {q:0,r:0};
@@ -161,5 +174,4 @@ function resetGame(){
   updateCat();
 }
 
-// init
-initBoard();
+init();
